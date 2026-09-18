@@ -17,4 +17,29 @@
 	chassis-type = "tablet";
 
 	qcom,msm-id = <QCOM_ID_APQ8053 0>;
+	qcom,board-id = <8 0>;
+
+	aliases {
+		serial0 = &uart_0;
+	};
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};
+
+	reserved-memory {
+		ramoops@8ee00000 {
+			compatible = "ramoops";
+			reg = <0x0 0x8ee00000 0x0 0x80000>;
+
+			console-size = <0x40000>;
+			ftrace-size = <0x15000>;
+			record-size = <0x5000>;
+			pmsg-size = <0x2000>;
+		};
+	};
+};
+
+&uart_0 {
+	status = "okay";
 };
