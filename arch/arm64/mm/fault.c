@@ -786,6 +786,13 @@ static int do_sea(unsigned long far, unsigned long esr, struct pt_regs *regs)
 		 */
 		siaddr  = untagged_addr(far);
 	}
+
+	pr_emerg("TB8704F-M5-SEA: FAR=%016lx ESR=%016lx PC=%016lx LR=%016lx SP=%016lx\n",
+		 far, esr,
+		 (unsigned long)regs->pc,
+		 (unsigned long)regs->regs[30],
+		 (unsigned long)regs->sp);
+
 	arm64_notify_die(inf->name, regs, inf->sig, inf->code, siaddr, esr);
 
 	return 0;
