@@ -1,0 +1,20 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright (c) 2026 SnisLab
+ */
+
+/dts-v1/;
+
+#include <dt-bindings/arm/qcom,ids.h>
+
+#include "msm8953.dtsi"
+#include "pm8953.dtsi"
+#include "pmi8950.dtsi"
+
+/ {
+	model = "Lenovo Tab 4 8 Plus TB-8704F";
+	compatible = "lenovo,tb8704f", "qcom,apq8053", "qcom,msm8953";
+	chassis-type = "tablet";
+
+	qcom,msm-id = <QCOM_ID_APQ8053 0>;
+};
