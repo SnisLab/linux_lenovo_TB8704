@@ -761,179 +761,20 @@ static int do_bad(unsigned long far, unsigned long esr, struct pt_regs *regs)
 	return 1; /* "fault" */
 }
 
-static noinline __section(".text.after.target") void
-tb8704f_m5_pgwalk(unsigned long far, unsigned long esr, struct pt_regs *regs)
-{
-	u64 va = read_sysreg(elr_el1);
-	u64 ttbr1;
-	u64 pgd_desc = 0;
-	u64 p4d_desc = 0;
-	u64 pud_desc = 0;
-	u64 pmd_desc = 0;
-	u64 pte_desc = 0;
-	u64 phys;
-	u64 final_pa;
-	u64 pgd_idx;
-	u64 p4d_idx;
-	u64 pud_idx;
-	u64 pmd_idx;
-	u64 pte_idx;
-	pgd_t *pgdp = NULL;
-	const u64 *descp;
-	void *next;
-	long ret;
+extern void tb8704f_m5_pgwalk(void);
 
-	pr_emerg("TB8704F-M5-PGWALK-ENTER: VA=%016llx\n",
-		 (unsigned long long)va);
+asm(".pushsection .text.after.target,\"ax\"\n"
+    ".align 2\n"
+    ".global tb8704f_m5_pgwalk\n"
+    ".type tb8704f_m5_pgwalk, %function\n"
+    "tb8704f_m5_pgwalk:\n"
+    "ret\n"
+    ".size tb8704f_m5_pgwalk, .-tb8704f_m5_pgwalk\n"
+    ".popsection\n");
 
-	pgd_idx = (va >> 48) & 0x1ff;
-	p4d_idx = (va >> 39) & 0x1ff;
-	pud_idx = (va >> 30) & 0x1ff;
-	pmd_idx = (va >> 21) & 0x1ff;
-	pte_idx = (va >> 12) & 0x1ff;
-	pr_emerg("TB8704F-M5-PGWALK-0: VA=%016llx IDX=%03llx/%03llx/%03llx/%03llx/%03llx\n",
-		 (unsigned long long)va,
-		 (unsigned long long)pgd_idx,
-		 (unsigned long long)p4d_idx,
-		 (unsigned long long)pud_idx,
-		 (unsigned long long)pmd_idx,
-		 (unsigned long long)pte_idx);
-
-	ttbr1 = read_sysreg(ttbr1_el1);
-	pr_emerg("TB8704F-M5-PGWALK-1: TTBR1=%016llx\n",
-		 (unsigned long long)ttbr1);
-
-	ret = get_kernel_nofault(pgdp, &init_mm.pgd);
-	pr_emerg("TB8704F-M5-PGWALK-2: PTR=%016llx RET=%ld DESC=%016llx\n",
-		 (unsigned long long)(unsigned long)&init_mm.pgd,
-		 ret,
-		 (unsigned long long)(unsigned long)pgdp);
-	if (ret) {
-		pr_emerg("TB8704F-M5-PGWALK-STOP: LEVEL=PGD_PTR RET=%ld\n", ret);
-		return;
-	}
-
-	descp = (const u64 *)pgdp + pgd_idx;
-	ret = get_kernel_nofault(pgd_desc, descp);
-	pr_emerg("TB8704F-M5-PGWALK-3: PTR=%016llx RET=%ld DESC=%016llx\n",
-		 (unsigned long long)(unsigned long)descp,
-		 ret,
-		 (unsigned long long)pgd_desc);
-	if (ret || !(pgd_desc & 1) ||
-	    (pgd_desc & PGD_TYPE_MASK) != PGD_TYPE_TABLE) {
-		pr_emerg("TB8704F-M5-PGWALK-STOP: LEVEL=PGD TYPE=%s DESC=%016llx RET=%ld\n",
-			 ret ? "NOFAULT" : (!(pgd_desc & 1) ? "INVALID" : "NON_TABLE"),
-			 (unsigned long long)pgd_desc, ret);
-		return;
-	}
-	phys = __pgd_to_phys(__pgd(pgd_desc));
-	next = (void *)__phys_to_virt(phys);
-	pr_emerg("TB8704F-M5-PGWALK-4: LEVEL=PGD TYPE=TABLE NEXT=%016llx\n",
-		 (unsigned long long)(unsigned long)next);
-
-	descp = (const u64 *)next + p4d_idx;
-	ret = get_kernel_nofault(p4d_desc, descp);
-	pr_emerg("TB8704F-M5-PGWALK-5: PTR=%016llx RET=%ld DESC=%016llx\n",
-		 (unsigned long long)(unsigned long)descp,
-		 ret,
-		 (unsigned long long)p4d_desc);
-	if (ret || !(p4d_desc & 1) ||
-	    (p4d_desc & P4D_TYPE_MASK) != P4D_TYPE_TABLE) {
-		pr_emerg("TB8704F-M5-PGWALK-STOP: LEVEL=P4D TYPE=%s DESC=%016llx RET=%ld\n",
-			 ret ? "NOFAULT" : (!(p4d_desc & 1) ? "INVALID" : "NON_TABLE"),
-			 (unsigned long long)p4d_desc, ret);
-		return;
-	}
-	phys = __p4d_to_phys(__p4d(p4d_desc));
-	next = (void *)__phys_to_virt(phys);
-	pr_emerg("TB8704F-M5-PGWALK-6: LEVEL=P4D TYPE=TABLE NEXT=%016llx\n",
-		 (unsigned long long)(unsigned long)next);
-
-	descp = (const u64 *)next + pud_idx;
-	ret = get_kernel_nofault(pud_desc, descp);
-	pr_emerg("TB8704F-M5-PGWALK-7: PTR=%016llx RET=%ld DESC=%016llx\n",
-		 (unsigned long long)(unsigned long)descp,
-		 ret,
-		 (unsigned long long)pud_desc);
-	if (ret || !(pud_desc & 1)) {
-		pr_emerg("TB8704F-M5-PGWALK-STOP: LEVEL=PUD TYPE=%s DESC=%016llx RET=%ld\n",
-			 ret ? "NOFAULT" : "INVALID",
-			 (unsigned long long)pud_desc, ret);
-		return;
-	}
-	if ((pud_desc & PUD_TYPE_MASK) == PUD_TYPE_SECT) {
-		phys = __pud_to_phys(__pud(pud_desc));
-		final_pa = phys | (va & (PUD_SIZE - 1));
-		pr_emerg("TB8704F-M5-PGWALK-FINAL: VA=%016llx LEVEL=PUD DESC=%016llx PHYS_BASE=%016llx VA_OFFSET=%016llx FINAL_PA=%016llx\n",
-			 (unsigned long long)va, (unsigned long long)pud_desc,
-			 (unsigned long long)phys,
-			 (unsigned long long)(va & (PUD_SIZE - 1)),
-			 (unsigned long long)final_pa);
-		return;
-	}
-	if ((pud_desc & PUD_TYPE_MASK) != PUD_TYPE_TABLE) {
-		pr_emerg("TB8704F-M5-PGWALK-STOP: LEVEL=PUD TYPE=NON_TABLE DESC=%016llx RET=0\n",
-			 (unsigned long long)pud_desc);
-		return;
-	}
-	phys = __pud_to_phys(__pud(pud_desc));
-	next = (void *)__phys_to_virt(phys);
-	pr_emerg("TB8704F-M5-PGWALK-8: LEVEL=PUD TYPE=TABLE NEXT=%016llx\n",
-		 (unsigned long long)(unsigned long)next);
-
-	descp = (const u64 *)next + pmd_idx;
-	ret = get_kernel_nofault(pmd_desc, descp);
-	pr_emerg("TB8704F-M5-PGWALK-9: PTR=%016llx RET=%ld DESC=%016llx\n",
-		 (unsigned long long)(unsigned long)descp,
-		 ret,
-		 (unsigned long long)pmd_desc);
-	if (ret || !(pmd_desc & 1)) {
-		pr_emerg("TB8704F-M5-PGWALK-STOP: LEVEL=PMD TYPE=%s DESC=%016llx RET=%ld\n",
-			 ret ? "NOFAULT" : "INVALID",
-			 (unsigned long long)pmd_desc, ret);
-		return;
-	}
-	if ((pmd_desc & PMD_TYPE_MASK) == PMD_TYPE_SECT) {
-		phys = __pmd_to_phys(__pmd(pmd_desc));
-		final_pa = phys | (va & (PMD_SIZE - 1));
-		pr_emerg("TB8704F-M5-PGWALK-FINAL: VA=%016llx LEVEL=PMD DESC=%016llx PHYS_BASE=%016llx VA_OFFSET=%016llx FINAL_PA=%016llx\n",
-			 (unsigned long long)va, (unsigned long long)pmd_desc,
-			 (unsigned long long)phys,
-			 (unsigned long long)(va & (PMD_SIZE - 1)),
-			 (unsigned long long)final_pa);
-		return;
-	}
-	if ((pmd_desc & PMD_TYPE_MASK) != PMD_TYPE_TABLE) {
-		pr_emerg("TB8704F-M5-PGWALK-STOP: LEVEL=PMD TYPE=NON_TABLE DESC=%016llx RET=0\n",
-			 (unsigned long long)pmd_desc);
-		return;
-	}
-	phys = __pmd_to_phys(__pmd(pmd_desc));
-	next = (void *)__phys_to_virt(phys);
-	pr_emerg("TB8704F-M5-PGWALK-10: LEVEL=PMD TYPE=TABLE NEXT=%016llx\n",
-		 (unsigned long long)(unsigned long)next);
-
-	descp = (const u64 *)next + pte_idx;
-	ret = get_kernel_nofault(pte_desc, descp);
-	pr_emerg("TB8704F-M5-PGWALK-11: PTR=%016llx RET=%ld DESC=%016llx\n",
-		 (unsigned long long)(unsigned long)descp,
-		 ret,
-		 (unsigned long long)pte_desc);
-	if (ret || !(pte_desc & 1) ||
-	    (pte_desc & PTE_TYPE_MASK) != PTE_TYPE_PAGE) {
-		pr_emerg("TB8704F-M5-PGWALK-STOP: LEVEL=PTE TYPE=%s DESC=%016llx RET=%ld\n",
-			 ret ? "NOFAULT" : (!(pte_desc & 1) ? "INVALID" : "NON_PAGE"),
-			 (unsigned long long)pte_desc, ret);
-		return;
-	}
-	phys = __pte_to_phys(__pte(pte_desc));
-	final_pa = phys | (va & (PAGE_SIZE - 1));
-	pr_emerg("TB8704F-M5-PGWALK-FINAL: VA=%016llx LEVEL=PTE DESC=%016llx PHYS_BASE=%016llx VA_OFFSET=%016llx FINAL_PA=%016llx\n",
-		 (unsigned long long)va, (unsigned long long)pte_desc,
-		 (unsigned long long)phys,
-		 (unsigned long long)(va & (PAGE_SIZE - 1)),
-		 (unsigned long long)final_pa);
-}
+asm(".pushsection .rodata.str1.8,\"aMS\",@progbits,1\n"
+    ".fill 0x6f0, 1, 0xa5\n"
+    ".popsection\n");
 
 static int do_sea(unsigned long far, unsigned long esr, struct pt_regs *regs)
 {
@@ -996,7 +837,7 @@ static int do_sea(unsigned long far, unsigned long esr, struct pt_regs *regs)
 		 tb_insn_m8,
 		 tb_insn_m8_ret);
 
-	tb8704f_m5_pgwalk(far, esr, regs);
+	tb8704f_m5_pgwalk();
 
 	pr_emerg("TB8704F-M5-SEA-REGS: PSTATE=%016llx\n",
 		 (unsigned long long)regs->pstate);
