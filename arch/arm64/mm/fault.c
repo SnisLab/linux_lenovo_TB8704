@@ -765,6 +765,14 @@ static int do_sea(unsigned long far, unsigned long esr, struct pt_regs *regs)
 {
 	const struct fault_info *inf;
 	unsigned long siaddr;
+	u64 tb_elr;
+	u64 tb_far;
+	u64 tb_esr;
+	u64 tb_spsr;
+	u32 tb_insn_pc = 0;
+	u32 tb_insn_m8 = 0;
+	long tb_insn_pc_ret;
+	long tb_insn_m8_ret;
 
 	inf = esr_to_fault_info(esr);
 
@@ -786,6 +794,33 @@ static int do_sea(unsigned long far, unsigned long esr, struct pt_regs *regs)
 		 */
 		siaddr  = untagged_addr(far);
 	}
+
+	tb_elr = read_sysreg(elr_el1);
+	tb_far = read_sysreg(far_el1);
+	tb_esr = read_sysreg(esr_el1);
+	tb_spsr = read_sysreg(spsr_el1);
+	tb_insn_pc_ret = get_kernel_nofault(tb_insn_pc,
+					   (const u32 *)regs->pc);
+	tb_insn_m8_ret = get_kernel_nofault(tb_insn_m8,
+					   (const u32 *)(regs->pc - 8));
+
+	pr_emerg("TB8704F-M5-SEA-DIRECT: ELR=%016llx FAR=%016llx ESR=%016llx SPSR=%016llx RPC=%016lx RSP=%016lx\n",
+		 (unsigned long long)tb_elr,
+		 (unsigned long long)tb_far,
+		 (unsigned long long)tb_esr,
+		 (unsigned long long)tb_spsr,
+		 (unsigned long)regs->pc,
+		 (unsigned long)regs->sp);
+
+	pr_emerg("TB8704F-M5-SEA-DIRECT: X0=%016llx X1=%016llx X2=%016llx X22=%016llx IPC=%08x RPCRET=%ld IM8=%08x RM8RET=%ld\n",
+		 (unsigned long long)regs->regs[0],
+		 (unsigned long long)regs->regs[1],
+		 (unsigned long long)regs->regs[2],
+		 (unsigned long long)regs->regs[22],
+		 tb_insn_pc,
+		 tb_insn_pc_ret,
+		 tb_insn_m8,
+		 tb_insn_m8_ret);
 
 	pr_emerg("TB8704F-M5-SEA: FAR=%016lx ESR=%016lx PC=%016lx LR=%016lx SP=%016lx\n",
 		 far, esr,
