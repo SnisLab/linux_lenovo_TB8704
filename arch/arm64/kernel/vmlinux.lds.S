@@ -182,6 +182,9 @@ SECTIONS
 			HYPERVISOR_TEXT
 			*(.gnu.warning)
 	}
+	.text.after.target : ALIGN(16) {
+		*(.text.after.target)
+	}
 
 	. = ALIGN(SEGMENT_ALIGN);
 	_etext = .;			/* End of text section */
