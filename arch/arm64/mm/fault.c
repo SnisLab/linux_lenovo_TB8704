@@ -793,6 +793,59 @@ static int do_sea(unsigned long far, unsigned long esr, struct pt_regs *regs)
 		 (unsigned long)regs->regs[30],
 		 (unsigned long)regs->sp);
 
+	pr_emerg("TB8704F-M5-SEA-REGS: PSTATE=%016llx\n",
+		 (unsigned long long)regs->pstate);
+
+	pr_emerg("TB8704F-M5-SEA-REGS: X00=%016llx X01=%016llx X02=%016llx\n",
+		 (unsigned long long)regs->regs[0],
+		 (unsigned long long)regs->regs[1],
+		 (unsigned long long)regs->regs[2]);
+
+	pr_emerg("TB8704F-M5-SEA-REGS: X03=%016llx X04=%016llx X05=%016llx\n",
+		 (unsigned long long)regs->regs[3],
+		 (unsigned long long)regs->regs[4],
+		 (unsigned long long)regs->regs[5]);
+
+	pr_emerg("TB8704F-M5-SEA-REGS: X06=%016llx X07=%016llx X08=%016llx\n",
+		 (unsigned long long)regs->regs[6],
+		 (unsigned long long)regs->regs[7],
+		 (unsigned long long)regs->regs[8]);
+
+	pr_emerg("TB8704F-M5-SEA-REGS: X09=%016llx X10=%016llx X11=%016llx\n",
+		 (unsigned long long)regs->regs[9],
+		 (unsigned long long)regs->regs[10],
+		 (unsigned long long)regs->regs[11]);
+
+	pr_emerg("TB8704F-M5-SEA-REGS: X12=%016llx X13=%016llx X14=%016llx\n",
+		 (unsigned long long)regs->regs[12],
+		 (unsigned long long)regs->regs[13],
+		 (unsigned long long)regs->regs[14]);
+
+	pr_emerg("TB8704F-M5-SEA-REGS: X15=%016llx X16=%016llx X17=%016llx\n",
+		 (unsigned long long)regs->regs[15],
+		 (unsigned long long)regs->regs[16],
+		 (unsigned long long)regs->regs[17]);
+
+	pr_emerg("TB8704F-M5-SEA-REGS: X18=%016llx X19=%016llx X20=%016llx\n",
+		 (unsigned long long)regs->regs[18],
+		 (unsigned long long)regs->regs[19],
+		 (unsigned long long)regs->regs[20]);
+
+	pr_emerg("TB8704F-M5-SEA-REGS: X21=%016llx X22=%016llx X23=%016llx\n",
+		 (unsigned long long)regs->regs[21],
+		 (unsigned long long)regs->regs[22],
+		 (unsigned long long)regs->regs[23]);
+
+	pr_emerg("TB8704F-M5-SEA-REGS: X24=%016llx X25=%016llx X26=%016llx\n",
+		 (unsigned long long)regs->regs[24],
+		 (unsigned long long)regs->regs[25],
+		 (unsigned long long)regs->regs[26]);
+
+	pr_emerg("TB8704F-M5-SEA-REGS: X27=%016llx X28=%016llx X29=%016llx\n",
+		 (unsigned long long)regs->regs[27],
+		 (unsigned long long)regs->regs[28],
+		 (unsigned long long)regs->regs[29]);
+
 	arm64_notify_die(inf->name, regs, inf->sig, inf->code, siaddr, esr);
 
 	return 0;
