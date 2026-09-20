@@ -822,11 +822,12 @@ static int do_sea(unsigned long far, unsigned long esr, struct pt_regs *regs)
 		 tb_insn_m8,
 		 tb_insn_m8_ret);
 
-	pr_emerg("TB8704F-M5-SEA: FAR=%016lx ESR=%016lx PC=%016lx LR=%016lx SP=%016lx\n",
-		 far, esr,
-		 (unsigned long)regs->pc,
-		 (unsigned long)regs->regs[30],
-		 (unsigned long)regs->sp);
+	asm volatile("at s1e1r, %0" :: "r" (tb_elr));
+	isb();
+	tb_far = read_sysreg_par();
+	pr_emerg("TB8704F-M5-PAR: ELR=%016llx PAR=%016llx\n",
+		 (unsigned long long)tb_elr,
+		 (unsigned long long)tb_far);
 
 	pr_emerg("TB8704F-M5-SEA-REGS: PSTATE=%016llx\n",
 		 (unsigned long long)regs->pstate);
