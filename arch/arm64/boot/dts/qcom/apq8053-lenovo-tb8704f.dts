@@ -1,11 +1,15 @@
-// SPDX-License-Identifier: BSD-3-Clause
+// SPDX-License-Identifier: GPL-2.0-only OR BSD-2-Clause
 /*
- * Copyright (c) 2026 SnisLab
+ * Partial Device Tree scaffold for the Lenovo Tab 4 8 Plus with
+ * evidence-backed eMMC/UART-console, volume-up key, and ramoops descriptions.
+ * This is not a bootable or hardware-ready TB-8704F description.
  */
 
 /dts-v1/;
 
 #include <dt-bindings/arm/qcom,ids.h>
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
 
 #include "msm8953.dtsi"
 #include "pm8953.dtsi"
@@ -19,6 +23,17 @@
 	qcom,msm-id = <QCOM_ID_APQ8053 0>;
 	qcom,board-id = <8 0>;
 
+	reserved-memory {
+		ramoops@8ee00000 {
+			compatible = "ramoops";
+			reg = <0x0 0x8ee00000 0x0 0x80000>;
+			record-size = <0x5000>;
+			console-size = <0x40000>;
+			pmsg-size = <0x20000>;
+			ftrace-size = <0x15000>;
+		};
+	};
+
 	aliases {
 		serial0 = &uart_0;
 	};
@@ -27,19 +42,61 @@
 		stdout-path = "serial0:115200n8";
 	};
 
-	reserved-memory {
-		ramoops@8ee00000 {
-			compatible = "ramoops";
-			reg = <0x0 0x8ee00000 0x0 0x80000>;
+	gpio-keys {
+		compatible = "gpio-keys";
+		pinctrl-names = "default";
+		pinctrl-0 = <&gpio_key_default>;
 
-			console-size = <0x40000>;
-			ftrace-size = <0x15000>;
-			record-size = <0x5000>;
-			pmsg-size = <0x2000>;
+		key-volume-up {
+			label = "volume_up";
+			gpios = <&tlmm 85 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_VOLUMEUP>;
+			debounce-interval = <15>;
 		};
+	};
+
+	vph_pwr: vph-pwr-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "vph_pwr";
+		regulator-always-on;
+		regulator-boot-on;
 	};
 };
 
 &uart_0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart_console_active>;
+
+	status = "okay";
+};
+
+&rpm_requests {
+	regulators {
+		compatible = "qcom,rpm-pm8953-regulators";
+		vdd_s4-supply = <&vph_pwr>;
+		vdd_l4_l5_l6_l7_l16_l19-supply = <&pm8953_s4>;
+		vdd_l8_l11_l12_l13_l14_l15-supply = <&vph_pwr>;
+
+		pm8953_s4: s4 {
+			regulator-min-microvolt = <1900000>;
+			regulator-max-microvolt = <2050000>;
+		};
+
+		pm8953_l5: l5 {
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+		};
+
+		pm8953_l8: l8 {
+			regulator-min-microvolt = <2900000>;
+			regulator-max-microvolt = <2900000>;
+		};
+	};
+};
+
+&sdhc_1 {
+	vmmc-supply = <&pm8953_l8>;
+	vqmmc-supply = <&pm8953_l5>;
+
 	status = "okay";
 };

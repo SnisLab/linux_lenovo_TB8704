@@ -96,6 +96,13 @@ properties:
     oneOf:
       - items:
           - enum:
+              - lenovo,cd-18781y
+              - lenovo,tb8704f
+          - const: qcom,apq8053
+          - const: qcom,msm8953
+
+      - items:
+          - enum:
               - qcom,apq8016-sbc
               - schneider,apq8016-hmibsc
           - const: qcom,apq8016
