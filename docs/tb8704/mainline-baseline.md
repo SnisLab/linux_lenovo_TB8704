@@ -1,44 +1,61 @@
 # TB8704F Mainline Baseline
 
-Source repository:
-`msm8953-mainline/linux`
+Repository:
+`SnisLab/linux_lenovo_TB8704`
 
-Source branch:
+Working branch:
+`bringup/6.12`
+
+Upstream repository:
+`https://github.com/msm8953-mainline/linux`
+
+Upstream branch:
 `6.12/main`
 
-Pinned source commit:
+Pinned upstream commit:
 `d9eabbae3edea6adb08e74c30059aa0933afaae7`
 
-Source kernel:
-Linux 6.12.0
+Kernel version:
+Linux `6.12.0`, verified from the pinned tree's `Makefile`.
 
-Import model:
-tree-identical shallow snapshot
+Pinned commit metadata:
 
-Upstream history embedded:
-no
+- Author: Felix Kaechele <felix@kaechele.ca>
+- Author date: 2025-01-13 16:12:00 -0500
+- Committer: Barnabas Czeman <barni2000@users.noreply.github.com>
+- Commit date: 2025-01-20 07:39:24 +0100
+- Subject: `arm64: dts: qcom: msm8953: motorola-potter: add touchscreen reset GPIO`
 
-Reason:
-avoid vendoring/pushing the complete Linux history while preserving the
-exact source tree used for TB8704F bring-up.
+Vanilla reference:
+Linux `v6.12`, commit
+`adc218676eef25575469234709c2d87185ca223a`.
 
-Upstream tree SHA:
-`fd329c51c04b8fea88ac36c325c29db1d6611d47`
+Reason for baseline:
 
-Snapshot root commit:
-`3f8567fd67785d7419be6720db80e962e92309c7`
+- Contains MSM8953 WIP integration needed for bring-up.
+- Contains useful Lenovo/APQ8053/MSM8953 reference DTS files.
+- Avoids starting the board port from Android 3.18.
+- Allows a later controlled rebase toward maintained upstream/LTS.
 
-Snapshot tree SHA:
-`fd329c51c04b8fea88ac36c325c29db1d6611d47`
+Legacy reference:
+`SnisLab/android_kernel_lenovo_msm8953`
 
-Legacy Android 3.18 tree:
-hardware reference only
+Legacy policy:
+Hardware reference only; no wholesale source import.
 
 Device:
-Lenovo TB-8704F
+Lenovo Tab 4 8 Plus TB-8704F
 
-Initial SoC hypothesis:
-APQ8053 board identity using shared MSM8953 infrastructure
+Primary initial SoC hypothesis:
+APQ8053 board identity using common MSM8953 SoC infrastructure.
 
-Mainline device validation:
-none yet
+Confidence:
+Medium.
+
+Device validation:
+None on mainline yet.
+
+M1 scope:
+This commit establishes source provenance and project metadata only. No
+TB8704 DTS, legacy DTS port, kernel configuration, build, firmware import,
+fastboot operation, or device access is part of M1.
