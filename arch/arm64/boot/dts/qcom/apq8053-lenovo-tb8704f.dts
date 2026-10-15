@@ -1,5 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only OR BSD-2-Clause
+// SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Copyright (c) 2026 SnisLab
+ *
  * Partial Device Tree scaffold for the Lenovo Tab 4 8 Plus with
  * evidence-backed eMMC/UART-console, volume-up key, and ramoops descriptions.
  * This is not a bootable or hardware-ready TB-8704F description.
